@@ -1,0 +1,21 @@
+Using pre-set license
+Built from '2021.1/release' branch; Version is '2021.1.16f1 (5fa502fca597) revision 6268162'; Using compiler version '192528614'; Build Type 'Release'
+OS: 'Windows 10 Pro; OS build 19042.1110; Version 2009; 64bit' Language: 'pt' Physical Memory: 8031 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1, IsPro: 0
+
+ COMMAND LINE ARGUMENTS:
+D:\UnityEditor\2021.1.16f1\Editor\Unity.exe
+-adb2
+-batchMode
+-noUpm
+-name
+AssetImportWorker0
+-projectPath
+E:/MeusProjetosRepositorio/ToodooStudioProject/ToodooStudio
+-logFile
+Logs/AssetImportWorker0.log
+-srvPort
+52300
+Successfully changed project path to: E:/MeusProjetosRepositorio/ToodooStudioProject/ToodooStudio
+E:/MeusProjetosRepositorio/ToodooStudioProject/ToodooStudio
+Using Asset Import Pipeline V2.
