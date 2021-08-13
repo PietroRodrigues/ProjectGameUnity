@@ -7,9 +7,10 @@ public class Player : MonoBehaviour
 {
 
     [Header("Settings")]
-    public float speedRun;
-    public float rotateSpeed;
-    
+    [SerializeField] float speedRun = 8;
+    [SerializeField] int life = 3;
+    [SerializeField] bool specialUp = true;
+
     [Header("Jump Settings")]
     private bool jumping = false;
     public float jumpforce;
@@ -21,14 +22,12 @@ public class Player : MonoBehaviour
     float xRaw;
     float zRaw;
 
+    Statos statos;
     bool walk;
-    float speed;
     bool atack;
     bool def;
-    int life;
-    bool victory;
-
-    bool specialUp = true;
+    bool hit;
+    bool victory;  
 
     Rigidbody rb;
 
@@ -39,12 +38,31 @@ public class Player : MonoBehaviour
     {
         anim = new PlayerAnimation(this.GetComponentInChildren<Animator>());
         rb = GetComponent<Rigidbody>();
+        statos = new Statos(life, speedRun);
     }
 
     private void Update()
     {
         Inputs();
-        anim.AnimationController(speed, atack, def, life, victory);
+        anim.AnimationController(statos.Speed, atack, def, hit, life, victory);
+    }
+
+    private void FixedUpdate()
+    {
+        Movimentation();
+        Rotation();
+        jump();
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (atack && specialUp)
+        {
+            if (other.gameObject.CompareTag("Enemy") && !other.isTrigger)
+            {
+                Debug.Log("hit");
+            }
+        }
     }
 
     void Inputs()
@@ -83,40 +101,28 @@ public class Player : MonoBehaviour
             def = false;
             atack = false;         
         }
-    }  
-
-    private void FixedUpdate() {       
-
-        Movimentation();           
-        Rotation();
-        jump();       
-
-    }
+    }   
 
     void Movimentation()
     {
 
         if (xRaw != 0 || zRaw != 0)
         {
-            speed += 0.2f;
-
             if (walk)
-            {
-                if (speed > speedRun/2)
-                    speed = speedRun/2;
+            {               
+                statos.Speed = speedRun/2;
             }
             else
             {
-                if (speed > speedRun)
-                    speed = speedRun;
+                statos.Speed = speedRun;
             }
             
-            rb.MovePosition(rb.position + speed * Time.fixedDeltaTime * transform.forward);
+            rb.MovePosition(rb.position + statos.Speed * Time.fixedDeltaTime * transform.forward);
 
         }
         else
         {
-            speed = 0;
+            statos.Speed = 0;
         }
 
     }
@@ -174,16 +180,7 @@ public class Player : MonoBehaviour
 
     }
 
-    private void OnTriggerStay(Collider other)
-    {
-        if (atack && specialUp)
-        {
-            if (other.gameObject.CompareTag("Enemy"))
-            {
-                Debug.Log("hit");
-            }
-        }
-    }
+   
 
 
 

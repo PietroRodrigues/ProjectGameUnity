@@ -13,9 +13,9 @@ public class PlayerAnimation
 
     }
 
-    public void AnimationController(float speed, bool atack, bool def, int life, bool victory)
+    public void AnimationController(float speed, bool atack, bool def,bool hit, int life, bool victory)
     {
-        animator.SetFloat("Speed", speed);
+        animator.SetFloat("speed", speed);
        
         animator.SetBool("atack", atack);
 
@@ -24,6 +24,8 @@ public class PlayerAnimation
         animator.SetBool("victory", victory);
 
         animator.SetInteger("life", life);
+
+        animator.SetBool("hit", hit);
 
     }
 
