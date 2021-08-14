@@ -8,8 +8,8 @@ public class Player : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] float speedRun = 8;
-    [SerializeField] int life = 3;
-    [SerializeField] bool specialUp = true;
+    [SerializeField] int life = 10;
+    [HideInInspector] public bool specialUp = false;
 
     [Header("Jump Settings")]
     private bool jumping = false;
@@ -19,19 +19,26 @@ public class Player : MonoBehaviour
     [SerializeField] Transform GrandCheckPos = null;
     [SerializeField] float GrondCheckSize = 1f;
 
+    [SerializeField] GameObject particleFire;
+    [SerializeField] GameObject particleAtack;
+    [SerializeField] ParticleSystem[] particleEfect;
+    Transform alvo;
+
     float xRaw;
     float zRaw;
 
-    Statos statos;
+    [HideInInspector] public Statos statos;
+    [HideInInspector] public bool def;
+    [HideInInspector] public bool hit;
+    [HideInInspector] public bool victory;
     bool walk;
-    bool atack;
-    bool def;
-    bool hit;
-    bool victory;  
+    bool atack;    
+    bool opemChest;
 
     Rigidbody rb;
 
     PlayerAnimation anim ;
+
 
     // Start is called before the first frame update
     void Start()
@@ -43,25 +50,43 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
+        Special();
         Inputs();
-        anim.AnimationController(statos.Speed, atack, def, hit, life, victory);
+        anim.AnimationController(statos.Speed, atack, def, hit, statos.Life, victory);
     }
+
 
     private void FixedUpdate()
     {
-        Movimentation();
-        Rotation();
-        jump();
+        if (!victory) {
+            if (statos.Life != 0)
+            {
+                Movimentation();
+                Rotation();
+                jump();
+            }
+        }
     }
 
     private void OnTriggerStay(Collider other)
     {
-        if (atack && specialUp)
+        if (other.gameObject.CompareTag("Enemy") && !other.isTrigger)
         {
-            if (other.gameObject.CompareTag("Enemy") && !other.isTrigger)
-            {
-                Debug.Log("hit");
-            }
+            alvo = other.transform;
+        }
+        else if (other.gameObject.GetComponent<Baus>() != null && !other.isTrigger)
+        {
+            if(opemChest)
+                OpenChests(other.gameObject.GetComponent<Baus>());
+        }
+
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.CompareTag("Enemy") && !other.isTrigger)
+        {
+            alvo = null;
         }
     }
 
@@ -83,6 +108,15 @@ public class Player : MonoBehaviour
             walk = false;
         }
 
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            opemChest = true;
+        }
+        if (Input.GetKeyUp(KeyCode.E))
+        {
+            opemChest = false;
+        }
+
         if (Input.GetMouseButton(0))
         {
             atack = true;
@@ -101,7 +135,21 @@ public class Player : MonoBehaviour
             def = false;
             atack = false;         
         }
+
     }   
+
+    void Special()
+    {
+        if (specialUp)
+        {
+            foreach (ParticleSystem efect in particleEfect)
+            {
+                if(efect.isStopped)
+                    efect.Play();
+            }
+
+        }
+    }
 
     void Movimentation()
     {
@@ -153,10 +201,9 @@ public class Player : MonoBehaviour
 
     void jump()
     {
-
         Collider[] hitColliders = Physics.OverlapSphere(GrandCheckPos.position, GrondCheckSize, layer, QueryTriggerInteraction.Ignore);
-
-        if (hitColliders.Length != 1)
+              
+        if (hitColliders.Length != 2)
         {
             isGrounded = false;
         }
@@ -164,7 +211,6 @@ public class Player : MonoBehaviour
         {
             isGrounded = true;
         }
-
 
         if (jumping && isGrounded)
         {
@@ -180,9 +226,59 @@ public class Player : MonoBehaviour
 
     }
 
-   
+    public void SkillAtack()
+    {
+        if (specialUp)
+        {
+            if (alvo != null)
+            {
+                int mobsDeath = 0;
+                Enemy enemy = alvo.GetComponentInParent<Enemy>();
 
+                particleFire.transform.position = new Vector3(alvo.position.x, alvo.position.y + 1, alvo.position.z);
+                particleFire.gameObject.SetActive(true);
+                particleFire.GetComponent<ParticleSystem>().Play();
 
+                enemy.hit = true;
+                enemy.statos.Life--;
+
+                if (enemy.statos.Life == 0)
+                {
+                    foreach (Enemy mob in FindObjectsOfType<Enemy>())
+                    {
+                        if (mob.statos.Life == 0)
+                            mobsDeath++;
+                    }
+
+                    if (mobsDeath == FindObjectsOfType<Enemy>().Length)
+                    {
+                        victory = true;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (alvo != null)
+            {
+                Enemy enemy = alvo.GetComponentInParent<Enemy>();
+
+                particleAtack.transform.position = new Vector3(alvo.position.x, alvo.position.y + 1, alvo.position.z);
+                particleAtack.gameObject.SetActive(true);
+                particleAtack.GetComponent<ParticleSystem>().Play();
+
+                if(Random.Range(0,1) < 0.2f)
+                {
+                    enemy.stunStatos = true;
+                }
+            }
+        }
+    }
+
+    void OpenChests(Baus bau)
+    {
+        bau.OpenChest();
+    }
 
     private void OnDrawGizmos()
     {

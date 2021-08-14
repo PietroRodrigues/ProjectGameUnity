@@ -21,12 +21,15 @@ public class Enemy : MonoBehaviour
     [SerializeField] float DistanceIgnore = 70;
 
     [Header("Settings Skill")]
-    [SerializeField] Transform particle;
+    [SerializeField] Transform particlePoison;
+    [SerializeField] Transform particleFire;
+    public ParticleSystem StunParticle;
 
+    [HideInInspector] public bool stunStatos; 
 
     NavMeshAgent agent;
     Vector3 startpoit;
-    Transform alvo;
+    [SerializeField] Transform alvo;
     int indcPatrulhaAtual;
     bool trafegar;
     bool espera;
@@ -36,13 +39,14 @@ public class Enemy : MonoBehaviour
     bool startTimeLost;
     float timeLost;
     float deleyAtack;
+    float stunTimer;
     bool atackUp;
 
-    Statos statos;
+    [HideInInspector] public Statos statos;
+    [HideInInspector] public bool hit;
     EnemyAnimation anim;
-    bool atack;
-    bool hit;
-    bool victory;
+    bool atack;    
+    bool victory = false;
 
     private void Start()
     {       
@@ -63,6 +67,7 @@ public class Enemy : MonoBehaviour
 
     private void Update()
     {
+
         if (agent.isStopped)
             statos.Speed = 0;
         else if (!agent.isStopped && persegundo)
@@ -71,8 +76,44 @@ public class Enemy : MonoBehaviour
             statos.Speed = 3;
 
         agent.speed = statos.Speed;
-        Searching();
-        Patrol();
+
+        if (!victory)
+        {
+            if (statos.Life != 0)
+            {
+                if (!stunStatos)
+                {
+                    Searching();
+                    Patrol();
+                }
+                else
+                {
+                    agent.isStopped = true;
+                    stunTimer += Time.deltaTime;
+                    statos.Speed = 0;
+                    atack = false;
+
+                    if (StunParticle.isStopped)
+                        StunParticle.Play();
+
+                    if (stunTimer >= 10)
+                    {
+                        if (StunParticle.isPlaying)
+                            StunParticle.Stop();
+
+                        stunTimer = 0;                       
+                        stunStatos = false;
+                        agent.isStopped = false;                       
+                    }
+                    
+                }
+            }
+            else
+              agent.isStopped = true;         
+        }
+        else
+          agent.isStopped = true;        
+
         anim.AnimationController(statos.Speed, atack, statos.Life, hit, victory);
         
         if (!atackUp)
@@ -89,10 +130,12 @@ public class Enemy : MonoBehaviour
 
     }
 
-
     private void OnTriggerStay(Collider other)
     {
-        ToStalk(other);
+        if (!stunStatos)
+        {
+            ToStalk(other);
+        }
     }
 
     private void OnTriggerExit(Collider other)
@@ -105,14 +148,17 @@ public class Enemy : MonoBehaviour
 
     void ToStalk(Collider other)
     {
+        
         if (other.CompareTag("Player") && !other.isTrigger)
         {
+
             if (Vector3.Distance(transform.position, startpoit) >= DistanceIgnore)
             {
                 LostTarget();
             }
             else
-            {
+            {               
+
                 Vector3 tg, center;
                 tg = new Vector3(other.transform.position.x, other.transform.position.y + 1, other.transform.position.z);
                 center = new Vector3(transform.localPosition.x, transform.localPosition.y + 1, transform.localPosition.z);
@@ -121,24 +167,25 @@ public class Enemy : MonoBehaviour
                 bool too = Physics.Linecast(center, tg, out hit, 1, QueryTriggerInteraction.Ignore);
 
                 if (too && hit.collider.gameObject.CompareTag("Player"))
-                {                   
+                {                    
+
                     Found(hit.collider.transform);
 
                     SetDestination();
 
                     if (Vector3.Distance(transform.position, alvo.position) <= rengeAtack)
-                    {
+                    {   
+                        
                         agent.isStopped = true;
                         transform.rotation = Quaternion.RotateTowards(transform.rotation, miraTravada.rotation, rotateSpeed * Time.deltaTime);
-                        
-                        if(atackUp)
+
+                        if (atackUp)
                         {
                             atack = !atack;
-                                          
 
-                            atackUp = false;                            
+
+                            atackUp = false;
                         }
-
                        
                     }
                     else
@@ -160,12 +207,40 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    void SkillAtack()
+    public void SkillAtack(int atacNum)
     {
-        particle.transform.position = new Vector3(alvo.position.x, alvo.position.y + 1, alvo.position.z);
-        particle.gameObject.SetActive(true);
-        particle.GetComponent<ParticleSystem>().Play();
-       
+        if (alvo != null)
+        {
+            Player player = alvo.GetComponentInParent<Player>();
+
+            if (atacNum == 1)
+            {
+                particlePoison.transform.position = new Vector3(alvo.position.x, alvo.position.y + 1, alvo.position.z);
+                particlePoison.gameObject.SetActive(true);
+                particlePoison.GetComponent<ParticleSystem>().Play();
+            }
+            else if (atacNum == 2)
+            {
+                particleFire.transform.position = new Vector3(alvo.position.x, alvo.position.y + 1, alvo.position.z);
+                particleFire.gameObject.SetActive(true);
+                particleFire.GetComponent<ParticleSystem>().Play();
+            }            
+
+            if (!player.def)
+            {
+                player.hit = true;
+                player.hit = true;
+                player.statos.Life--;
+            }
+
+            if (player.statos.Life == 0)
+            {
+                foreach (Enemy mob in FindObjectsOfType<Enemy>())
+                {
+                    mob.victory = true;                        
+                }              
+            }
+        }
     }
 
     void Patrol()
