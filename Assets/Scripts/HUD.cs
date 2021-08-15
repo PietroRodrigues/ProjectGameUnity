@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class HUD : MonoBehaviour
 {
@@ -20,9 +21,8 @@ public class HUD : MonoBehaviour
 
     [HideInInspector] public bool poder;
 
-    // Update is called once per frame
     void Update()
-    {
+    {     
         lifeTxt.text = "X " + player.statos.Life.ToString();
 
         reliquiasHud[0].SetActive(moedas);
@@ -31,11 +31,23 @@ public class HUD : MonoBehaviour
         poderHud.SetActive(poder);
         player.specialUp = poder;
 
-        if (player.statos.Life == 0)
+        if (player.statos.Life == 0) {
             defeat.SetActive(true);
-        else if (player.victory)
+        } else if (player.victory) { 
             victory.SetActive(true);
+        }      
 
+        if (player.victory || player.statos.Life == 0)
+        {
+            if (JoystickMap.Btn() == "A" ||                
+                JoystickMap.Btn() == "Start" ||
+                Input.GetKeyDown(KeyCode.KeypadEnter))
+            {
+                SceneManager.LoadScene(0);
+            }
+
+        }
 
     }
+
 }

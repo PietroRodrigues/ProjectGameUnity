@@ -7,12 +7,12 @@ public class CameraController : MonoBehaviour
 
     [SerializeField] Transform foco;
     [SerializeField] bool lockCursor;
-    [SerializeField] float mouseSensivity = 2;
     [SerializeField] float distanceFromTarget = 10;
     [SerializeField] float alturaCamera = 0;
     Vector2 pithMinMax = new Vector2(-40, 85);
 
     public float rotationSmoothTime = 0.12f;
+    float mouseSensivity = 2;
 
     Player player;
     Vector3 rotationSmoothSpeed;
@@ -39,16 +39,26 @@ public class CameraController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        JoystickMap.JoystickActive();
+
+        if (JoystickMap.XboxControl)
+            mouseSensivity = 0.5f;
+        else
+            mouseSensivity = 2;
+
         GetComponent<Camera>().fieldOfView = Mathf.Lerp(GetComponent<Camera>().fieldOfView, 40f, 0.1f);
     }
 
     private void LateUpdate()
     {
         if (!player.victory)
-        {
-            if(player.statos.Life != 0){
-                yaw += Input.GetAxis("Mouse X") * mouseSensivity;
-                pitch -= Input.GetAxis("Mouse Y") * mouseSensivity;
+        {            
+
+            if (player.statos.Life != 0){
+                          
+
+                yaw += JoystickMap.RHorizontal() * mouseSensivity;
+                pitch -= JoystickMap.RVertical() * mouseSensivity;
                 pitch = Mathf.Clamp(pitch, pithMinMax.x, pithMinMax.y);
 
                 currentRotation = Vector3.SmoothDamp(currentRotation, new Vector3(pitch, yaw), ref rotationSmoothSpeed, rotationSmoothTime);

@@ -20,21 +20,21 @@ public class Baus : MonoBehaviour
         {
             case HUD.reliquias.moedas:
                 hud.moedas = true;
-                Open();
+                Open();               
                 break;
             case HUD.reliquias.livro:
                 hud.livro = true;
-                Open();
+                Open();                
                 break;
             case HUD.reliquias.coroua:
                 hud.coroua = true;
-                Open();
+                Open();                
                 break;
             case HUD.reliquias.poder:
                 if (hud.moedas && hud.livro && hud.coroua)
                 {
                     hud.poder = true;
-                    Open();
+                    Open();                    
                 }
                 break;
             default:
@@ -46,7 +46,7 @@ public class Baus : MonoBehaviour
     void Open()
     {
         bOpen.SetActive(true);
-        bClosed.SetActive(false);
+        bClosed.SetActive(false);        
     }
 
 }

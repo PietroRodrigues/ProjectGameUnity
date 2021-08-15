@@ -4,7 +4,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 public class Player : MonoBehaviour
-{
+{  
 
     [Header("Settings")]
     [SerializeField] float speedRun = 8;
@@ -24,13 +24,14 @@ public class Player : MonoBehaviour
     [SerializeField] ParticleSystem[] particleEfect;
     Transform alvo;
 
-    float xRaw;
-    float zRaw;
+    [SerializeField] float xRaw;
+    [SerializeField] float zRaw;
 
     [HideInInspector] public Statos statos;
     [HideInInspector] public bool def;
     [HideInInspector] public bool hit;
     [HideInInspector] public bool victory;
+
     bool walk;
     bool atack;    
     bool opemChest;
@@ -39,8 +40,6 @@ public class Player : MonoBehaviour
 
     PlayerAnimation anim ;
 
-
-    // Start is called before the first frame update
     void Start()
     {
         anim = new PlayerAnimation(this.GetComponentInChildren<Animator>());
@@ -91,15 +90,15 @@ public class Player : MonoBehaviour
     }
 
     void Inputs()
-    {
-        xRaw = Input.GetAxisRaw("Horizontal");
-        zRaw = Input.GetAxisRaw("Vertical");
-        
-        if (Input.GetKeyDown(KeyCode.Space)){
+    {        
+        xRaw = JoystickMap.LHorizontal(); 
+        zRaw = JoystickMap.LVertical(); 
+
+        if (Input.GetKeyDown(KeyCode.Space) || JoystickMap.Btn() == "A"){
             jumping = true;
         }
 
-        if (Input.GetKey(KeyCode.LeftShift))
+        if (Input.GetKey(KeyCode.LeftShift) || JoystickMap.Axis("LT") == 1)
         {
             walk = true;
         }
@@ -108,23 +107,23 @@ public class Player : MonoBehaviour
             walk = false;
         }
 
-        if (Input.GetKeyDown(KeyCode.E))
+        if (Input.GetKey(KeyCode.E) || JoystickMap.Btn() == "Y")
         {
             opemChest = true;
-        }
-        if (Input.GetKeyUp(KeyCode.E))
+
+        }else
         {
             opemChest = false;
         }
 
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0) || JoystickMap.Btn() == "X")
         {
             atack = true;
             xRaw = 0;
             zRaw = 0;
         
         }
-        else if (Input.GetMouseButton(1)) { 
+        else if (Input.GetMouseButton(1) || JoystickMap.Btn() == "B") { 
 
             def = true;
             xRaw = 0;
@@ -231,28 +230,32 @@ public class Player : MonoBehaviour
         if (specialUp)
         {
             if (alvo != null)
-            {
+            {                
                 int mobsDeath = 0;
                 Enemy enemy = alvo.GetComponentInParent<Enemy>();
 
-                particleFire.transform.position = new Vector3(alvo.position.x, alvo.position.y + 1, alvo.position.z);
-                particleFire.gameObject.SetActive(true);
-                particleFire.GetComponent<ParticleSystem>().Play();
-
-                enemy.hit = true;
-                enemy.statos.Life--;
-
-                if (enemy.statos.Life == 0)
+                if (enemy.statos.Life != 0)
                 {
-                    foreach (Enemy mob in FindObjectsOfType<Enemy>())
-                    {
-                        if (mob.statos.Life == 0)
-                            mobsDeath++;
-                    }
 
-                    if (mobsDeath == FindObjectsOfType<Enemy>().Length)
+                    particleFire.transform.position = new Vector3(alvo.position.x, alvo.position.y + 1, alvo.position.z);
+                    particleFire.gameObject.SetActive(true);
+                    particleFire.GetComponent<ParticleSystem>().Play();
+
+                    enemy.hit = true;
+                    enemy.statos.Life--;
+
+                    if (enemy.statos.Life == 0)
                     {
-                        victory = true;
+                        foreach (Enemy mob in FindObjectsOfType<Enemy>())
+                        {
+                            if (mob.statos.Life == 0)
+                                mobsDeath++;
+                        }
+
+                        if (mobsDeath == FindObjectsOfType<Enemy>().Length)
+                        {
+                            victory = true;
+                        }
                     }
                 }
             }
@@ -263,13 +266,17 @@ public class Player : MonoBehaviour
             {
                 Enemy enemy = alvo.GetComponentInParent<Enemy>();
 
-                particleAtack.transform.position = new Vector3(alvo.position.x, alvo.position.y + 1, alvo.position.z);
-                particleAtack.gameObject.SetActive(true);
-                particleAtack.GetComponent<ParticleSystem>().Play();
-
-                if(Random.Range(0,1) < 0.2f)
+                if (enemy.statos.Life != 0)
                 {
-                    enemy.stunStatos = true;
+
+                    particleAtack.transform.position = new Vector3(alvo.position.x, alvo.position.y + 1, alvo.position.z);
+                    particleAtack.gameObject.SetActive(true);
+                    particleAtack.GetComponent<ParticleSystem>().Play();
+
+                    if (Random.Range(0, 1) < 0.2f)
+                    {
+                        enemy.stunStatos = true;
+                    }
                 }
             }
         }

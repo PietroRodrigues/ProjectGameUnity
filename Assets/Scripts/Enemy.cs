@@ -29,7 +29,7 @@ public class Enemy : MonoBehaviour
 
     NavMeshAgent agent;
     Vector3 startpoit;
-    [SerializeField] Transform alvo;
+    Transform alvo;
     int indcPatrulhaAtual;
     bool trafegar;
     bool espera;
@@ -48,8 +48,11 @@ public class Enemy : MonoBehaviour
     bool atack;    
     bool victory = false;
 
+    HUD hud;
+
     private void Start()
-    {       
+    {
+        hud = FindObjectOfType<HUD>();
         anim = new EnemyAnimation(this.GetComponentInChildren<Animator>());
         statos = new Statos(3,6);
 
@@ -66,7 +69,7 @@ public class Enemy : MonoBehaviour
     }
 
     private void Update()
-    {
+    {      
 
         if (agent.isStopped)
             statos.Speed = 0;
@@ -79,6 +82,7 @@ public class Enemy : MonoBehaviour
 
         if (!victory)
         {
+
             if (statos.Life != 0)
             {
                 if (!stunStatos)
@@ -101,18 +105,27 @@ public class Enemy : MonoBehaviour
                         if (StunParticle.isPlaying)
                             StunParticle.Stop();
 
-                        stunTimer = 0;                       
+                        stunTimer = 0;
                         stunStatos = false;
-                        agent.isStopped = false;                       
+                        agent.isStopped = false;
                     }
-                    
+
                 }
             }
             else
-              agent.isStopped = true;         
+                agent.isStopped = true;
         }
         else
-          agent.isStopped = true;        
+        {
+            if (hud.player.statos.Life != 0)
+            {
+                victory = false;
+                agent.isStopped = false;
+            }
+
+            agent.isStopped = true;
+
+        }
 
         anim.AnimationController(statos.Speed, atack, statos.Life, hit, victory);
         
@@ -157,51 +170,57 @@ public class Enemy : MonoBehaviour
                 LostTarget();
             }
             else
-            {               
+            {
+                if (statos.Life != 0)
+                {
 
-                Vector3 tg, center;
-                tg = new Vector3(other.transform.position.x, other.transform.position.y + 1, other.transform.position.z);
-                center = new Vector3(transform.localPosition.x, transform.localPosition.y + 1, transform.localPosition.z);
+                    Vector3 tg, center;
+                    tg = new Vector3(other.transform.position.x, other.transform.position.y + 1, other.transform.position.z);
+                    center = new Vector3(transform.localPosition.x, transform.localPosition.y + 1, transform.localPosition.z);
 
-                RaycastHit hit;
-                bool too = Physics.Linecast(center, tg, out hit, 1, QueryTriggerInteraction.Ignore);
+                    RaycastHit hit;
+                    bool too = Physics.Linecast(center, tg, out hit, 1, QueryTriggerInteraction.Ignore);
 
-                if (too && hit.collider.gameObject.CompareTag("Player"))
-                {                    
-
-                    Found(hit.collider.transform);
-
-                    SetDestination();
-
-                    if (Vector3.Distance(transform.position, alvo.position) <= rengeAtack)
-                    {   
-                        
-                        agent.isStopped = true;
-                        transform.rotation = Quaternion.RotateTowards(transform.rotation, miraTravada.rotation, rotateSpeed * Time.deltaTime);
-
-                        if (atackUp)
-                        {
-                            atack = !atack;
-
-
-                            atackUp = false;
-                        }
-                       
-                    }
-                    else
+                    if (too && hit.collider.gameObject.CompareTag("Player"))
                     {
-                        if (atack)
-                        {                           
-                           atack = false;                      
-                           atackUp = false;                          
+
+                        Found(hit.collider.transform);
+
+                        SetDestination();
+
+                        if (Vector3.Distance(transform.position, alvo.position) <= rengeAtack)
+                        {
+
+                            agent.isStopped = true;
+
+                            if (statos.Life != 0)
+                                transform.rotation = Quaternion.RotateTowards(transform.rotation, miraTravada.rotation, rotateSpeed * Time.deltaTime);
+
+                            if (atackUp)
+                            {
+                                atack = !atack;
+
+
+                                atackUp = false;
+                            }
 
                         }
                         else
-                            agent.isStopped = false;
-                       
-                    }
+                        {
+                            if (atack)
+                            {
+                                atack = false;
+                                atackUp = false;
 
+                            }
+                            else
+                                agent.isStopped = false;
+
+                        }
+
+                    }
                 }
+               
             }
 
         }
@@ -228,9 +247,12 @@ public class Enemy : MonoBehaviour
 
             if (!player.def)
             {
-                player.hit = true;
-                player.hit = true;
-                player.statos.Life--;
+                if (player.statos.Life > 0)
+                {
+                    player.hit = true;
+                    player.hit = true;
+                    player.statos.Life--;
+                }
             }
 
             if (player.statos.Life == 0)
